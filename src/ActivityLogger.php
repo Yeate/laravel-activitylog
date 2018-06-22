@@ -5,7 +5,7 @@ namespace Spatie\Activitylog;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
+use Request;
 use Illuminate\Support\Traits\Macroable;
 use Spatie\Activitylog\Exceptions\CouldNotLogActivity;
 use Spatie\Activitylog\Models\Activity;
@@ -158,12 +158,12 @@ class ActivityLogger
 
     private function RecordIp(Request $request){
         if($this->isRecordIp){
-            $request->setTrustedProxies(['127.0.0.1']);
-            $ip = $request->getClientIp(); 
+            Request::setTrustedProxies(['127.0.0.1']);
+            $ip = Request::getClientIp(); 
             $ipModel=IpAddress::where('ip',$ip)->first();
             if(empty($ipModel)){
                 $ipInfo=file_get_contents('http://ip.taobao.com/service/getIpInfo.php?ip='.$ip);       
-                $ipDetail=json_decode(ipInfo,true);
+                $ipDetail=json_decode($ipInfo,true);
                 $region = isset($ipDetail['data']['region'])?$ipDetail['data']['region']:'';
                 $city = isset($ipDetail['data']['city'])?$ipDetail['data']['city']:'';
                 $ipModel=new IpAddress();
