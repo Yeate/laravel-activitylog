@@ -12,17 +12,9 @@ class CreateActivityLogIpTable extends Migration
     {
         Schema::create(config('activitylog.ip_table_name'), function (Blueprint $table) {
             $table->increments('id');
-            $table->string('log_name')->nullable();
-            $table->text('description');
-            $table->integer('subject_id')->nullable();
-            $table->string('subject_type')->nullable();
-            $table->integer('causer_id')->nullable();
-            $table->string('causer_type')->nullable();
-            $table->integer('activitylog_ip_id')->nullable();
-            $table->text('properties')->nullable();
+            $table->string('ip')->nullable();
+            $table->string('address')->nullable();
             $table->timestamps();
-
-            $table->index('log_name');
         });
     }
 
@@ -31,6 +23,6 @@ class CreateActivityLogIpTable extends Migration
      */
     public function down()
     {
-        Schema::drop(config('activitylog.table_name'));
+        Schema::drop(config('activitylog.ip_table_name'));
     }
 }

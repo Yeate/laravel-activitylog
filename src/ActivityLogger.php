@@ -5,11 +5,12 @@ namespace Spatie\Activitylog;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Model;
-use Request;
 use Illuminate\Support\Traits\Macroable;
+use Request;
 use Spatie\Activitylog\Exceptions\CouldNotLogActivity;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Models\IpAddress;
+use Spatie\Activitylog\Models\RequestActivity;
 class ActivityLogger
 {
     use Macroable;
@@ -36,6 +37,8 @@ class ActivityLogger
 
     protected $isRecordIp;
 
+    protected $isRecordRequest;
+
     public function __construct(AuthManager $auth, Repository $config)
     {
         $this->auth = $auth;
@@ -52,6 +55,7 @@ class ActivityLogger
 
         $this->logName = $config['activitylog']['default_log_name'];
         $this->isRecordIp = $config['activitylog']['record_ip'] ?? false;
+        $this->isRecordRequest = $config['activitylog']['record_request'] ?? false;
         $this->logEnabled = $config['activitylog']['enabled'] ?? true;
     }
 
@@ -133,7 +137,7 @@ class ActivityLogger
         if (! $this->logEnabled) {
             return;
         }
-
+        $request = $this->RecordRequest();
         $activity = ActivitylogServiceProvider::getActivityModelInstance();
 
         if ($this->performedOn) {
@@ -147,16 +151,16 @@ class ActivityLogger
         $activity->properties = $this->properties;
 
         $activity->description = $this->replacePlaceholders($description, $activity);
-
+        $activity->request_id=$request;
         $activity->log_name = $this->logName;
-        $activity->activitylog_ip_id=$this->RecordIp(new Request());
+        $activity->activitylog_ip_id=$this->RecordIp();
         $activity->save();
         
         return $activity;
     }
 
 
-    private function RecordIp(Request $request){
+    private function RecordIp(){
         if($this->isRecordIp){
             Request::setTrustedProxies(['127.0.0.1']);
             $ip = Request::getClientIp(); 
@@ -177,8 +181,24 @@ class ActivityLogger
             $id=0;
         }
         return $id;
+    }
 
 
+    private function RecordRequest(){
+        if($this->isRecordRequest){
+            $method=Request::method();
+            $url=Request::path();
+            $data=json_encode(Request::input());
+            $request=new RequestActivity();
+            $request -> request_method = $method;
+            $request -> request_url = $url;
+            $request -> request_data = $data;
+            $request -> save();
+            $id = $request->id;
+        }else{
+            $id=0;
+        }
+        return $id;
     }
 
     /**
