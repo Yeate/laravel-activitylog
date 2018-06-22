@@ -3,12 +3,13 @@
 namespace Spatie\Activitylog;
 
 use Illuminate\Auth\AuthManager;
-use Illuminate\Database\Eloquent\Model;
-use Spatie\Activitylog\Models\Activity;
-use Illuminate\Support\Traits\Macroable;
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Support\Traits\Macroable;
 use Spatie\Activitylog\Exceptions\CouldNotLogActivity;
-
+use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Models\IpAddress;
 class ActivityLogger
 {
     use Macroable;
@@ -33,6 +34,8 @@ class ActivityLogger
     /** @var string */
     protected $authDriver;
 
+    protected $isRecordIp;
+
     public function __construct(AuthManager $auth, Repository $config)
     {
         $this->auth = $auth;
@@ -48,7 +51,7 @@ class ActivityLogger
         }
 
         $this->logName = $config['activitylog']['default_log_name'];
-
+        $this->isRecordIp = $config['activitylog']['record_ip'] ?? false;
         $this->logEnabled = $config['activitylog']['enabled'] ?? true;
     }
 
@@ -146,10 +149,36 @@ class ActivityLogger
         $activity->description = $this->replacePlaceholders($description, $activity);
 
         $activity->log_name = $this->logName;
-
+        $activity->activitylog_ip_id=$this->RecordIp(new Request());
         $activity->save();
-
+        
         return $activity;
+    }
+
+
+    private function RecordIp(Request $request){
+        if($this->isRecordIp){
+            $request->setTrustedProxies(['127.0.0.1']);
+            $ip = $request->getClientIp(); 
+            $ipModel=IpAddress::where('ip',$ip)->first();
+            if(empty($ipModel)){
+                $ipInfo=file_get_contents('http://ip.taobao.com/service/getIpInfo.php?ip='.$ip);       
+                $ipDetail=json_decode(ipInfo,true);
+                $region = isset($ipDetail['data']['region'])?$ipDetail['data']['region']:'';
+                $city = isset($ipDetail['data']['city'])?$ipDetail['data']['city']:'';
+                $ipModel=new IpAddress();
+                $ipModel->ip = $ip;
+                $ipModel->address = $region.$city;
+                $ipModel->save();
+            }
+            $id=$ipModel->id;
+
+        }else{
+            $id=0;
+        }
+        return $id;
+
+
     }
 
     /**

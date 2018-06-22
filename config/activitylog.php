@@ -36,9 +36,11 @@ return [
      */
     'activity_model' => \Spatie\Activitylog\Models\Activity::class,
 
+    'record_ip' => false,
     /*
      * This is the name of the table that will be created by the migration and
      * used by the Activity model shipped with this package.
      */
     'table_name' => 'activity_log',
+    'ip_table_name' => 'activity_log_ip',
 ];
