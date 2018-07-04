@@ -7,6 +7,7 @@ use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Traits\Macroable;
 use Request;
+use Zhuzhichao\IpLocationZh\Ip;
 use Spatie\Activitylog\Exceptions\CouldNotLogActivity;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Models\IpAddress;
@@ -166,13 +167,10 @@ class ActivityLogger
             $ip = Request::getClientIp(); 
             $ipModel=IpAddress::where('ip',$ip)->first();
             if(empty($ipModel)){
-                $ipInfo=file_get_contents('http://ip.taobao.com/service/getIpInfo.php?ip='.$ip);       
-                $ipDetail=json_decode($ipInfo,true);
-                $region = isset($ipDetail['data']['region'])?$ipDetail['data']['region']:'';
-                $city = isset($ipDetail['data']['city'])?$ipDetail['data']['city']:'';
+                $ip_data=Ip::find($ip);
                 $ipModel=new IpAddress();
                 $ipModel->ip = $ip;
-                $ipModel->address = $region.$city;
+                $ipModel->address = implode('',$ip_data);
                 $ipModel->save();
             }
             $id=$ipModel->id;

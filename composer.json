@@ -29,7 +29,8 @@
         "illuminate/config": "~5.5.0|~5.6.0",
         "illuminate/database": "~5.5.0|~5.6.0",
         "illuminate/support": "~5.5.0|~5.6.0",
-        "spatie/string": "^2.1"
+        "spatie/string": "^2.1",
+        "zhuzhichao/ip-location-zh":"dev-master"
 
     },
     "require-dev": {
